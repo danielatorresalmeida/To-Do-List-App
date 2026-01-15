@@ -1,0 +1,23 @@
+{
+  "name": "to-do-list-app",
+  "version": "1.0.0",
+  "description": "A simple to-do list app built with React, TypeScript, Firebase, and Vite.",
+  "main": "src/App.tsx",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "dependencies": {
+    "firebase": "^12.8.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.3"
+  },
+  "devDependencies": {
+    "vite": "^7.3.1"
+  },
+  "author": "",
+  "license": "ISC",
+  "keywords": []
+}

@@ -1,15 +1,10 @@
-// src/App.tsx
-import React from 'react';
-import TodoList from './components/TodoList';
-import './styles/styles.css'; // or a specific CSS module if preferred
+import TodoList from "./components/TodoList";
 
-const App = () => {
+export default function App() {
   return (
-    <div>
-      <h1>My To-Do List</h1>
+    <div style={{ maxWidth: 600, margin: "40px auto", padding: 16 }}>
+      <h1 style={{ marginBottom: 16 }}>To-Do List</h1>
       <TodoList />
     </div>
   );
-};
-
-export default App;
+}
