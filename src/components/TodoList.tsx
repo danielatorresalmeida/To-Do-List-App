@@ -1,49 +1,55 @@
-import { useState } from "react";
-import type { Todo } from "../types/todo";
-import TodoForm from "./TodoForm";
-import TodoItem from "./TodoItem";
+import React, { useState, useEffect } from 'react';
 
-export default function TodoList() {
-  const [todos, setTodos] = useState<Todo[]>([]);
+interface Task {
+  id: number;
+  text: string;
+  isCompleted: boolean;
+  category: string;
+}
 
-  function addTodo(text: string) {
-    const newTodo: Todo = {
-      id: crypto.randomUUID(),
-      text,
-      completed: false,
-      createdAt: Date.now(),
-    };
-    setTodos((prev) => [newTodo, ...prev]);
-  }
+interface TodoListProps {
+  taskStatus: "incomplete" | "completed"; // Make the status prop more specific
+}
 
-  function toggleTodo(id: string) {
-    setTodos((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
-    );
-  }
+const TodoList: React.FC<TodoListProps> = ({ taskStatus }) => {
+  const [tasks, setTasks] = useState<Task[]>([]);
 
-  function deleteTodo(id: string) {
-    setTodos((prev) => prev.filter((t) => t.id !== id));
-  }
+  useEffect(() => {
+    // Get tasks from localStorage and parse them
+    const savedTasks = localStorage.getItem("tasks");
+    if (savedTasks) {
+      const parsedTasks: Task[] = JSON.parse(savedTasks);
+      setTasks(parsedTasks);
+    }
+  }, []);
+
+  // Filter tasks based on the status
+  const filteredTasks = tasks.filter((task) =>
+    taskStatus === "completed" ? task.isCompleted : !task.isCompleted
+  );
 
   return (
-    <div style={{ display: "grid", gap: 12 }}>
-      <TodoForm onAdd={addTodo} />
-
-      {todos.length === 0 ? (
-        <p style={{ opacity: 0.7 }}>No tasks yet. Add your first one.</p>
+    <div>
+      <h3>{taskStatus === "completed" ? "Completed Tasks" : "Incomplete Tasks"}</h3>
+      {filteredTasks.length === 0 ? (
+        <p>No tasks to display.</p>
       ) : (
-        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 8 }}>
-          {todos.map((todo) => (
-            <TodoItem
-              key={todo.id}
-              todo={todo}
-              onToggle={toggleTodo}
-              onDelete={deleteTodo}
-            />
-          ))}
-        </ul>
+        filteredTasks.map((task) => (
+          <div key={task.id} className="task-item">
+            <span>{task.text}</span> <span>({task.category})</span>
+            <button onClick={() => handleDelete(task.id)}>Delete</button> {/* Add a delete button */}
+          </div>
+        ))
       )}
     </div>
   );
-}
+
+  // Handle task deletion
+  function handleDelete(taskId: number) {
+    const updatedTasks = tasks.filter((task) => task.id !== taskId);
+    setTasks(updatedTasks);
+    localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+  }
+};
+
+export default TodoList;
