@@ -1,11 +1,288 @@
-/* src/styles/styles.css */
-body {
-  font-family: Arial, sans-serif;
+/* Global Reset */
+* {
   margin: 0;
   padding: 0;
-  background-color: #f5f5f5;
+  box-sizing: border-box;
 }
 
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: #f9f9f9;
+  color: #333;
+  padding: 20px 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+/* Main Container */
+.todo-container {
+  width: 100%;
+  max-width: 600px;
+  background-color: white;
+  padding: 25px;
+  border-radius: 20px;
+  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Heading */
 h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
   text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Search Input */
+.search-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  margin-bottom: 15px;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.search-input:focus {
+  border-color: #007bff;
+}
+
+/* Task List */
+.task-list {
+  width: 100%;
+  list-style: none;
+  padding: 0;
+}
+
+.task-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.05);
+  font-size: 16px;
+}
+
+.task-item .task-text {
+  flex: 1;
+}
+
+.task-item .task-date {
+  color: #888;
+  font-size: 14px;
+  margin-left: 12px;
+}
+
+.task-item button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 8px;
+  transition: transform 0.3s ease;
+}
+
+.task-item button:hover {
+  transform: scale(1.1);
+}
+
+/* Status Badge */
+.status-completed {
+  background-color: #28a745;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.status-pending {
+  background-color: #f39c12;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.clear-button {
+  background-color: #e74c3c;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  width: 100%;
+  margin-top: 20px;
+  transition: background-color 0.3s;
+}
+
+.clear-button:hover {
+  background-color: #c0392b;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+  .todo-container {
+    padding: 20px;
+  }
+
+  .task-item {
+    font-size: 14px;
+    padding: 12px;
+  }
+
+  .search-input {
+    font-size: 14px;
+  }
+
+  .clear-button {
+    font-size: 16px;
+  }
+}
+
+/* Error message style */
+.error-message {
+  color: red;
+  font-size: 14px;
+  margin-top: 10px;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* Modal Style for Success Message */
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #28a745;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-weight: bold;
+  z-index: 1000;
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.modal.hide {
+  opacity: 0;
+}
+
+.modal button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 16px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.modal button:hover {
+  opacity: 0.7;
+}
+
+/* Button Styling */
+.add-button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.add-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.add-button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.add-button:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* Task Inputs */
+.task-input,
+.category-input,
+.date-input {
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  width: 100%;
+  transition: border-color 0.3s;
+}
+
+.task-input:focus,
+.category-input:focus,
+.date-input:focus {
+  border-color: #007bff;
+}
+
+/* Task Item */
+.task-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.task-text {
+  flex-grow: 1;
+  font-size: 16px;
+  font-weight: 500;
+  word-wrap: break-word;
+}
+
+.task-text.completed-text {
+  text-decoration: line-through;
+  color: #888;
+}
+
+.task-date {
+  font-size: 12px;
+  color: #777;
+  margin-left: 10px;
+}
+
+/* Completed/Incomplete toggle button */
+.toggle-btn.completed {
+  color: green;
+}
+
+.toggle-btn.pending {
+  color: orange;
+}
+
+/* Delete Button */
+.delete-btn {
+  color: red;
+}
+
+.delete-btn:hover {
+  color: darkred;
 }

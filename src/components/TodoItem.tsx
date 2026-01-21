@@ -1,43 +1,53 @@
-import type { Todo } from "../types/todo";
+import React from "react";
+import { FaCheckCircle, FaTrashAlt } from "react-icons/fa";
 
-type TodoItemProps = {
-  todo: Todo;
-  onToggle: (id: string) => void;
-  onDelete: (id: string) => void;
-};
+interface TodoItemProps {
+  text: string;
+  category: string;
+  isCompleted: boolean;
+  date: string;
+  onDelete: () => void;
+  onToggle: () => void;
+}
 
-export default function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
+const TodoItem: React.FC<TodoItemProps> = ({
+  text,
+  category,
+  isCompleted,
+  date,
+  onDelete,
+  onToggle,
+}) => {
   return (
-    <li
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: 10,
-        background: "#fff",
-        borderRadius: 6,
-      }}
-    >
-      <input
-        type="checkbox"
-        checked={todo.completed}
-        onChange={() => onToggle(todo.id)}
-        aria-label={`Mark "${todo.text}" as ${todo.completed ? "incomplete" : "complete"}`}
-      />
+    <div className="task-item">
+      <div className={`task-text ${isCompleted ? "completed-text" : "pending-text"}`}>
+        {text}
+        <span className="task-date">{date}</span>
+      </div>
 
-      <span
-        style={{
-          flex: 1,
-          textDecoration: todo.completed ? "line-through" : "none",
-          opacity: todo.completed ? 0.6 : 1,
-        }}
-      >
-        {todo.text}
+      <span className={isCompleted ? "status-completed" : "status-pending"}>
+        {isCompleted ? "Completed" : "Pending"}
       </span>
 
-      <button onClick={() => onDelete(todo.id)} style={{ padding: "6px 10px" }}>
-        Delete
+      {/* Toggle completion button */}
+      <button
+        onClick={onToggle}
+        aria-label={isCompleted ? "Mark as Pending" : "Mark as Completed"}
+        className={`toggle-btn ${isCompleted ? "completed" : "pending"}`}
+      >
+        <FaCheckCircle color={isCompleted ? "green" : "orange"} />
       </button>
-    </li>
+
+      {/* Delete button */}
+      <button
+        onClick={onDelete}
+        aria-label="Delete Task"
+        className="delete-btn"
+      >
+        <FaTrashAlt color="red" />
+      </button>
+    </div>
   );
-}
+};
+
+export default TodoItem;

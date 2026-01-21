@@ -1,10 +1,31 @@
-import TodoList from "./components/TodoList";
+import React, { Component } from 'react';
 
-export default function App() {
-  return (
-    <div style={{ maxWidth: 600, margin: "40px auto", padding: 16 }}>
-      <h1 style={{ marginBottom: 16 }}>To-Do List</h1>
-      <TodoList />
-    </div>
-  );
+class ErrorBoundary extends Component {
+  state = { hasError: false, errorMessage: "" };
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: any, info: any) {
+    this.setState({ errorMessage: error.toString() });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <h1>Error: {this.state.errorMessage}</h1>;
+    }
+    return this.props.children;
+  }
 }
+
+// Usage in App.tsx
+const App: React.FC = () => {
+  return (
+    <ErrorBoundary>
+      {/* Your existing code */}
+    </ErrorBoundary>
+  );
+};
+
+export default App;

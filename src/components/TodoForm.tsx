@@ -1,33 +1,80 @@
-import { useState } from "react";
+import React, { useState } from 'react';
 
-type TodoFormProps = {
-  onAdd: (text: string) => void;
-};
+interface TodoFormProps {
+  onAdd: (text: string, category: string, date: string) => void;
+}
 
-export default function TodoForm({ onAdd }: TodoFormProps) {
-  const [text, setText] = useState("");
+const TodoForm: React.FC<TodoFormProps> = ({ onAdd }) => {
+  const [formData, setFormData] = useState({
+    taskText: "",
+    category: "",
+    date: "",
+  });
+  const [error, setError] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);  // State to control success modal visibility
 
-  function handleSubmit(e: React.FormEvent) {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const trimmed = text.trim();
-    if (!trimmed) return;
+    const { taskText, category, date } = formData;
 
-    onAdd(trimmed);
-    setText("");
-  }
+    // Validation check
+    if (!taskText.trim() || !category.trim() || !date) {
+      setError("Please fill in all the fields.");
+      return;
+    }
+
+    // Call onAdd prop to add the task
+    onAdd(taskText, category, date);
+
+    // Reset form and show success modal
+    setFormData({ taskText: "", category: "", date: "" });
+    setError(null);
+    setShowModal(true);
+
+    // Hide modal after 2 seconds
+    setTimeout(() => setShowModal(false), 2000);
+  };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8 }}>
+    <form onSubmit={handleSubmit} className="todo-form">
+      {error && <div className="error-message">{error}</div>}
+
       <input
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Add a new task..."
-        aria-label="New todo"
-        style={{ flex: 1, padding: 10 }}
+        type="text"
+        name="taskText"
+        value={formData.taskText}
+        onChange={handleChange}
+        placeholder="Task Name"
+        className="task-input"
       />
-      <button type="submit" style={{ padding: "10px 14px" }}>
-        Add
-      </button>
+      <input
+        type="text"
+        name="category"
+        value={formData.category}
+        onChange={handleChange}
+        placeholder="Category"
+        className="category-input"
+      />
+      <input
+        type="date"
+        name="date"
+        value={formData.date}
+        onChange={handleChange}
+        className="date-input"
+      />
+      <button type="submit" className="add-button" disabled={!formData.taskText || !formData.category || !formData.date}>Add</button>
+
+      {showModal && <div className="modal">Task Added!</div>}
     </form>
   );
-}
+};
+
+export default TodoForm;
