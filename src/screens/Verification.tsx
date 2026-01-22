@@ -17,7 +17,6 @@ const Verification: React.FC = () => {
 
   return (
     <div className="screen verification">
-      <span className="screen-label">verification page</span>
       <h1 className="screen-title">Verify account</h1>
       <div className="verify-card">
         <div className="brand-name brand-name--small">DO IT</div>

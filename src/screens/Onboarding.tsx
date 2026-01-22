@@ -56,7 +56,6 @@ const Onboarding: React.FC = () => {
 
   return (
     <div className="screen onboarding">
-      <span className="screen-label">service{activeIndex + 1}</span>
       <div className="onboarding__hero" data-animate="rise">
         <div className="illustration" style={{ "--accent": activeSlide.accent } as React.CSSProperties}>
           <div className="illustration__ring" />
