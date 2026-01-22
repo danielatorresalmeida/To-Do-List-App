@@ -14,7 +14,6 @@ const SplashScreen: React.FC = () => {
 
   return (
     <div className="screen screen--center splash">
-      <span className="screen-label">App</span>
       <div className="splash__center">
         <LogoMark size={84} />
         <div className="brand-name">DO IT</div>

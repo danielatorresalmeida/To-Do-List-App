@@ -50,7 +50,6 @@ const SignIn: React.FC = () => {
 
   return (
     <div className="screen auth">
-      <span className="screen-label">Sign in page</span>
       <div className="auth__header">
         <LogoMark size={64} />
         <div>

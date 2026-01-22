@@ -121,16 +121,6 @@ textarea::placeholder {
   padding-bottom: 32px;
 }
 
-.screen-label {
-  position: absolute;
-  top: 12px;
-  left: 16px;
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: lowercase;
-  color: rgba(255, 255, 255, 0.4);
-}
-
 .brand-name {
   font-family: "Comfortaa", sans-serif;
   font-size: 26px;
