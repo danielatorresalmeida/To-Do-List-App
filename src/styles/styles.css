@@ -1044,6 +1044,41 @@ textarea::placeholder {
   }
 }
 
+@media (min-width: 900px) {
+  .phone-frame {
+    width: min(90vw, 1080px);
+    height: min(92vh, 900px);
+    border-radius: 32px;
+  }
+
+  .frame-content {
+    padding: 40px 64px 32px;
+    align-items: center;
+  }
+
+  .screen {
+    width: 100%;
+    max-width: 860px;
+  }
+
+  .auth__header,
+  .auth__form,
+  .auth__social {
+    width: min(100%, 560px);
+    align-self: center;
+  }
+
+  .onboarding__text {
+    max-width: 560px;
+    align-self: center;
+  }
+
+  .onboarding__footer {
+    width: min(100%, 520px);
+    align-self: center;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
