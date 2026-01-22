@@ -1,29 +1,11 @@
-import React, { Component } from 'react';
+import React from 'react';
+import ErrorBoundary from './ErrorBoundary';  // Import the ErrorBoundary component
+import HomePage from './components/HomePage'; // Import your main component (or other components you need)
 
-class ErrorBoundary extends Component {
-  state = { hasError: false, errorMessage: "" };
-
-  static getDerivedStateFromError(error: any) {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: any, info: any) {
-    this.setState({ errorMessage: error.toString() });
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <h1>Error: {this.state.errorMessage}</h1>;
-    }
-    return this.props.children;
-  }
-}
-
-// Usage in App.tsx
 const App: React.FC = () => {
   return (
     <ErrorBoundary>
-      {/* Your existing code */}
+      <HomePage />  {/* Your main component(s) here */}
     </ErrorBoundary>
   );
 };

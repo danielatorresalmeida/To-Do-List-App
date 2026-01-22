@@ -1,0 +1,64 @@
+.home-page {
+  background: linear-gradient(45deg, #2a8eff, #00aaff); /* Blue gradient background */
+  color: white;
+  font-family: 'Arial', sans-serif;
+}
+
+.header {
+  padding: 20px;
+  text-align: center;
+}
+
+.header h2 {
+  font-size: 1.5em;
+}
+
+.header p {
+  font-size: 1em;
+  margin-top: 5px;
+}
+
+.notifications {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background-color: red;
+  border-radius: 50%;
+  padding: 5px 10px;
+  font-size: 14px;
+}
+
+.group-tasks, .tasks {
+  margin: 20px;
+}
+
+.group-tasks .task, .tasks .task {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+}
+
+.group-tasks .task h4, .tasks .task p {
+  margin: 5px 0;
+}
+
+.completed-tasks .task {
+  background-color: #4caf50; /* Green for completed tasks */
+}
+
+.tabs-bar {
+  display: flex;
+  justify-content: space-around;
+  background-color: #222;
+  padding: 10px;
+}
+
+.tabs-bar .tab {
+  color: white;
+  font-size: 20px;
+}
+
+.tabs-bar .tab span {
+  cursor: pointer;
+}
