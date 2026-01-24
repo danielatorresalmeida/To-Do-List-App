@@ -1046,26 +1046,20 @@ textarea::placeholder {
 
 @media (min-width: 1024px) {
   body {
-    padding: 0;
-    align-items: stretch;
-    justify-content: stretch;
-  }
-
-  .app-shell {
-    width: 100%;
-    height: 100vh;
-    align-items: stretch;
+    padding: 32px;
+    align-items: center;
+    justify-content: center;
   }
 
   .phone-frame {
-    width: 100%;
-    height: 100%;
-    border-radius: 0;
-    box-shadow: none;
+    width: min(90vw, 440px);
+    height: min(94vh, 860px);
+    border-radius: 28px;
+    box-shadow: var(--shadow);
   }
 
   .frame-content {
-    padding: 56px 72px 48px;
+    padding: 28px 24px 20px;
   }
 }
 
