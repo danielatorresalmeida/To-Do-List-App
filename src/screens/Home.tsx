@@ -1,19 +1,53 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { onAuthStateChanged, type User } from "firebase/auth";
 import { HiChevronRight, HiBell } from "react-icons/hi2";
 import { Link } from "react-router-dom";
 import TabBar from "../components/TabBar";
+import { auth } from "../services/firebase";
 
 const Home: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    if (!auth) {
+      return;
+    }
+    const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+      setUser(nextUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const displayName = user?.displayName || "Guest";
+  const email = user?.email || "guest@example.com";
+  const photoUrl = user?.photoURL || "";
+  const initials = useMemo(() => {
+    const parts = displayName.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) {
+      return "G";
+    }
+    return parts
+      .map((part) => part[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
+  }, [displayName]);
+
   return (
     <div className="screen home">
       <div className="home__header">
         <div className="profile-chip">
           <div className="profile-avatar">
+            {photoUrl ? (
+              <img src={photoUrl} alt={displayName} />
+            ) : (
+              <span className="avatar-initials">{initials}</span>
+            )}
             <div className="avatar-ring" />
           </div>
           <div>
-            <h2>oussama chahidi</h2>
-            <p>oussama.chahidi@gmail.com</p>
+            <h2>{displayName}</h2>
+            <p>{email}</p>
           </div>
         </div>
         <div className="notif">
