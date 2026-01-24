@@ -509,13 +509,31 @@ textarea::placeholder {
   position: relative;
   display: grid;
   place-items: center;
+  overflow: hidden;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  position: absolute;
+  inset: 0;
+}
+
+.avatar-initials {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  z-index: 1;
 }
 
 .avatar-ring {
-  width: 32px;
-  height: 32px;
+  position: absolute;
+  inset: 4px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.65);
+  z-index: 2;
 }
 
 .profile-chip h2 {
