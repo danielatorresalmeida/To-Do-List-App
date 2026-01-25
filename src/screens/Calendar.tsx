@@ -8,55 +8,14 @@ import {
   listCalendarEvents,
   type GoogleCalendarEvent
 } from "../services/googleCalendar";
-import { addTask, createTask, loadTasks } from "../services/tasks";
+import { addTask, createTask, formatDate, loadTasks } from "../services/tasks";
 import { buildCalendarEventPayload } from "../services/taskSync";
 
 const Calendar: React.FC = () => {
   const days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
-  const dates = [
-    { label: "26", muted: true },
-    { label: "27", muted: true },
-    { label: "28", muted: true },
-    { label: "29", muted: true },
-    { label: "30", muted: true },
-    { label: "31", muted: true },
-    { label: "1", muted: true },
-    { label: "2" },
-    { label: "3" },
-    { label: "4" },
-    { label: "5" },
-    { label: "6" },
-    { label: "7" },
-    { label: "8" },
-    { label: "9" },
-    { label: "10" },
-    { label: "11" },
-    { label: "12" },
-    { label: "13" },
-    { label: "14" },
-    { label: "15" },
-    { label: "16" },
-    { label: "17" },
-    { label: "18" },
-    { label: "19" },
-    { label: "20", active: true },
-    { label: "21" },
-    { label: "22" },
-    { label: "23" },
-    { label: "24" },
-    { label: "25" },
-    { label: "26" },
-    { label: "27" },
-    { label: "28" },
-    { label: "29" },
-    { label: "30" },
-    { label: "31" },
-    { label: "1", muted: true },
-    { label: "2", muted: true },
-    { label: "3", muted: true },
-    { label: "4", muted: true },
-    { label: "5", muted: true }
-  ];
+  const today = new Date();
+  const [currentMonth, setCurrentMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [selectedDate, setSelectedDate] = useState<Date>(today);
   const [calendarConnected, setCalendarConnected] = useState(false);
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
   const [status, setStatus] = useState<{ tone: "success" | "error"; message: string } | null>(null);
@@ -64,11 +23,7 @@ const Calendar: React.FC = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [taskTitle, setTaskTitle] = useState("");
-  const [taskDate, setTaskDate] = useState(() => {
-    const today = new Date();
-    const pad = (value: number) => String(value).padStart(2, "0");
-    return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
-  });
+  const [taskDate, setTaskDate] = useState(() => formatDate(today));
   const [taskTime, setTaskTime] = useState("09:00");
 
   useEffect(() => {
@@ -166,6 +121,56 @@ const Calendar: React.FC = () => {
     }
   };
 
+  const isSameDay = (left: Date, right: Date) =>
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate();
+
+  const getMonthLabel = (date: Date) =>
+    new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(date);
+
+  const getDaysInMonth = (date: Date) =>
+    new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+
+  const clampDay = (date: Date, day: number) => {
+    const max = getDaysInMonth(date);
+    return Math.min(day, max);
+  };
+
+  const changeMonth = (delta: number) => {
+    const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + delta, 1);
+    const nextSelected = new Date(
+      nextMonth.getFullYear(),
+      nextMonth.getMonth(),
+      clampDay(nextMonth, selectedDate.getDate())
+    );
+    setCurrentMonth(nextMonth);
+    setSelectedDate(nextSelected);
+    setTaskDate(formatDate(nextSelected));
+  };
+
+  const buildCalendarGrid = () => {
+    const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+    const startOffset = (firstDay.getDay() + 6) % 7;
+    const gridStart = new Date(firstDay);
+    gridStart.setDate(firstDay.getDate() - startOffset);
+
+    return Array.from({ length: 42 }).map((_, index) => {
+      const date = new Date(gridStart);
+      date.setDate(gridStart.getDate() + index);
+      const muted = date.getMonth() !== currentMonth.getMonth();
+      return {
+        date,
+        label: date.getDate(),
+        muted,
+        active: isSameDay(date, selectedDate),
+        today: isSameDay(date, today)
+      };
+    });
+  };
+
+  const calendarDates = buildCalendarGrid();
+
   const handleCreateEvent = async () => {
     if (!calendarConnected) {
       setStatus({ tone: "error", message: "Connect Google Calendar before adding events." });
@@ -237,11 +242,11 @@ const Calendar: React.FC = () => {
 
       <div className="calendar-card">
         <div className="calendar-nav">
-          <button type="button" className="icon-link" aria-label="Previous month">
+          <button type="button" className="icon-link" aria-label="Previous month" onClick={() => changeMonth(-1)}>
             <HiChevronLeft />
           </button>
-          <span>January</span>
-          <button type="button" className="icon-link" aria-label="Next month">
+          <span>{getMonthLabel(currentMonth)}</span>
+          <button type="button" className="icon-link" aria-label="Next month" onClick={() => changeMonth(1)}>
             <HiChevronRight />
           </button>
         </div>
@@ -251,15 +256,24 @@ const Calendar: React.FC = () => {
               {day}
             </span>
           ))}
-          {dates.map((date, index) => (
-            <span
-              key={`${date.label}-${index}`}
+          {calendarDates.map((date) => (
+            <button
+              key={date.date.toISOString()}
+              type="button"
               className={`calendar-day${date.muted ? " calendar-day--muted" : ""}${
                 date.active ? " calendar-day--active" : ""
-              }`}
+              }${date.today ? " calendar-day--today" : ""}`}
+              onClick={() => {
+                setSelectedDate(date.date);
+                setTaskDate(formatDate(date.date));
+                if (date.muted) {
+                  setCurrentMonth(new Date(date.date.getFullYear(), date.date.getMonth(), 1));
+                }
+              }}
+              aria-pressed={date.active}
             >
               {date.label}
-            </span>
+            </button>
           ))}
         </div>
       </div>
