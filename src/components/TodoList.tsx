@@ -1,11 +1,5 @@
-import React, { useState, useEffect } from 'react';
-
-interface Task {
-  id: number;
-  text: string;
-  isCompleted: boolean;
-  category: string;
-}
+import React, { useState, useEffect } from "react";
+import { loadTasks, removeTask, type Task } from "../services/tasks";
 
 interface TodoListProps {
   taskStatus: "incomplete" | "completed"; // Make the status prop more specific
@@ -15,12 +9,7 @@ const TodoList: React.FC<TodoListProps> = ({ taskStatus }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
 
   useEffect(() => {
-    // Get tasks from localStorage and parse them
-    const savedTasks = localStorage.getItem("tasks");
-    if (savedTasks) {
-      const parsedTasks: Task[] = JSON.parse(savedTasks);
-      setTasks(parsedTasks);
-    }
+    setTasks(loadTasks());
   }, []);
 
   // Filter tasks based on the status
@@ -36,8 +25,8 @@ const TodoList: React.FC<TodoListProps> = ({ taskStatus }) => {
       ) : (
         filteredTasks.map((task) => (
           <div key={task.id} className="task-item">
-            <span>{task.text}</span> <span>({task.category})</span>
-            <button onClick={() => handleDelete(task.id)}>Delete</button> {/* Add a delete button */}
+            <span>{task.title}</span> <span>({task.category || "General"})</span>
+            <button onClick={() => handleDelete(task.id)}>Delete</button>
           </div>
         ))
       )}
@@ -45,10 +34,9 @@ const TodoList: React.FC<TodoListProps> = ({ taskStatus }) => {
   );
 
   // Handle task deletion
-  function handleDelete(taskId: number) {
-    const updatedTasks = tasks.filter((task) => task.id !== taskId);
+  function handleDelete(taskId: string) {
+    const updatedTasks = removeTask(tasks, taskId);
     setTasks(updatedTasks);
-    localStorage.setItem("tasks", JSON.stringify(updatedTasks));
   }
 };
 

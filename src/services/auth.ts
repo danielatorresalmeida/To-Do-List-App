@@ -36,3 +36,11 @@ export const signOut = async () => {
   }
   await firebaseSignOut(auth);
 };
+
+export const getIdToken = async () => {
+  ensureFirebase();
+  if (!auth?.currentUser) {
+    throw new Error("Sign in to continue.");
+  }
+  return auth.currentUser.getIdToken();
+};
