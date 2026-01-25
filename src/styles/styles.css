@@ -224,12 +224,18 @@ textarea::placeholder {
   margin-top: auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  position: relative;
 }
 
 .dots {
   display: flex;
   gap: 8px;
+}
+
+.onboarding__footer .circle-btn {
+  position: absolute;
+  right: 0;
 }
 
 .dot {
@@ -1013,10 +1019,15 @@ textarea::placeholder {
 .calendar-day {
   padding: 6px 0;
   border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
 }
 
 .calendar-day--label {
   color: rgba(255, 255, 255, 0.6);
+  cursor: default;
 }
 
 .calendar-day--muted {
@@ -1026,6 +1037,16 @@ textarea::placeholder {
 .calendar-day--active {
   background: #2fb9ff;
   color: #ffffff;
+}
+
+.calendar-day--today {
+  border: 1px solid #ffd054;
+  color: #ffd054;
+}
+
+.calendar-day--today.calendar-day--active {
+  color: #ffffff;
+  box-shadow: 0 0 0 2px #ffd054;
 }
 
 .calendar-task {
