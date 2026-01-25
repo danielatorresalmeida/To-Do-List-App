@@ -377,6 +377,9 @@ textarea::placeholder {
   border: 1px solid rgba(255, 255, 255, 0.5);
   color: #ffffff;
   text-align: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .auth__switch {
@@ -704,6 +707,46 @@ textarea::placeholder {
   gap: 12px;
 }
 
+.tasks-sync {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tasks-sync h3 {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.tasks-sync p {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.tasks-sync__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.tasks-sync__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.tasks-sync__toggle input {
+  accent-color: #6de0ff;
+}
+
 .search-field {
   flex: 1;
   display: flex;
@@ -811,6 +854,23 @@ textarea::placeholder {
   gap: 10px;
 }
 
+.task-details__label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.task-details__label input,
+.task-details__label textarea {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: #ffffff;
+  width: 100%;
+}
+
 .task-title {
   display: flex;
   align-items: center;
@@ -850,6 +910,12 @@ textarea::placeholder {
   align-items: center;
   gap: 8px;
   color: #ffffff;
+  cursor: pointer;
+}
+
+.action-card:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .action-card svg {
@@ -987,6 +1053,71 @@ textarea::placeholder {
 
 .calendar-task__row input::placeholder {
   color: rgba(255, 255, 255, 0.6);
+}
+
+.calendar-task__submit {
+  width: 100%;
+}
+
+.calendar-sync {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.calendar-sync__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.calendar-sync__note {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.calendar-sync__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.calendar-events {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.calendar-events__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.calendar-event {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.calendar-event__title {
+  font-weight: 600;
+}
+
+.calendar-event__time {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.calendar-empty {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .verification {
