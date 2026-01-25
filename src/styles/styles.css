@@ -604,6 +604,14 @@ textarea::placeholder {
   color: rgba(255, 255, 255, 0.7);
 }
 
+.task-row h4 {
+  color: #111826;
+}
+
+.task-row p {
+  color: rgba(17, 24, 38, 0.6);
+}
+
 .avatar-stack {
   display: flex;
   gap: 6px;
