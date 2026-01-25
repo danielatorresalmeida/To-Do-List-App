@@ -225,7 +225,7 @@ textarea::placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
+  gap: 16px;
 }
 
 .dots {
@@ -233,10 +233,6 @@ textarea::placeholder {
   gap: 8px;
 }
 
-.onboarding__footer .circle-btn {
-  position: absolute;
-  right: 0;
-}
 
 .dot {
   width: 18px;
