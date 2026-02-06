@@ -359,6 +359,10 @@ textarea::placeholder {
   border-left: 4px solid var(--danger);
 }
 
+.status-pill--warning {
+  border-left: 4px solid #ffd054;
+}
+
 .primary-btn {
   padding: 12px 18px;
   border-radius: 12px;
@@ -451,6 +455,11 @@ textarea::placeholder {
   gap: 14px;
 }
 
+.modal-card .ghost-btn {
+  color: #1a1f2e;
+  border-color: rgba(26, 31, 46, 0.2);
+}
+
 .modal-icon {
   width: 60px;
   height: 60px;
@@ -494,6 +503,18 @@ textarea::placeholder {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.home__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.home-refresh {
+  padding: 6px 12px;
+  font-size: 12px;
 }
 
 .home__section--last {
@@ -1103,6 +1124,12 @@ textarea::placeholder {
 .calendar-sync__note {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.75);
+}
+
+.calendar-sync__hint,
+.tasks-sync__hint {
+  font-size: 12px;
+  color: #ffd054;
 }
 
 .calendar-sync__actions {

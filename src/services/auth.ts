@@ -1,5 +1,6 @@
 import {
   createUserWithEmailAndPassword,
+  GoogleAuthProvider,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut as firebaseSignOut
@@ -43,4 +44,17 @@ export const getIdToken = async () => {
     throw new Error("Sign in to continue.");
   }
   return auth.currentUser.getIdToken();
+};
+
+export const connectGoogleCalendar = async () => {
+  ensureFirebase();
+  const provider = new GoogleAuthProvider();
+  provider.addScope("https://www.googleapis.com/auth/calendar");
+  provider.setCustomParameters({ prompt: "consent" });
+  const result = await signInWithPopup(auth, provider);
+  const credential = GoogleAuthProvider.credentialFromResult(result);
+  if (!credential?.accessToken) {
+    throw new Error("No Google access token returned. Please try again.");
+  }
+  return { user: result.user, accessToken: credential.accessToken };
 };

@@ -5,9 +5,13 @@ import {
   createCalendarEvent,
   getCalendarAuthUrl,
   getCalendarStatus,
+  isClientCalendarMode,
+  isServerCalendarMode,
   listCalendarEvents,
+  setCalendarAccessToken,
   type GoogleCalendarEvent
 } from "../services/googleCalendar";
+import { connectGoogleCalendar } from "../services/auth";
 import { addTask, createTask, formatDate, loadTasks } from "../services/tasks";
 import { buildCalendarEventPayload } from "../services/taskSync";
 
@@ -19,6 +23,7 @@ const Calendar: React.FC = () => {
   const [calendarConnected, setCalendarConnected] = useState(false);
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
   const [status, setStatus] = useState<{ tone: "success" | "error"; message: string } | null>(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -31,6 +36,9 @@ const Calendar: React.FC = () => {
       try {
         const result = await getCalendarStatus();
         setCalendarConnected(result.connected);
+        if (result.connected) {
+          setSessionExpired(false);
+        }
       } catch {
         setCalendarConnected(false);
       }
@@ -48,9 +56,11 @@ const Calendar: React.FC = () => {
       try {
         const upcoming = await listCalendarEvents({ maxResults: 6 });
         setEvents(upcoming);
+        setSessionExpired(false);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unable to load calendar events.";
         setStatus({ tone: "error", message });
+        setSessionExpired(message.toLowerCase().includes("session expired"));
       } finally {
         setIsSyncing(false);
       }
@@ -62,43 +72,56 @@ const Calendar: React.FC = () => {
     setStatus(null);
     setIsConnecting(true);
     try {
-      const authUrl = await getCalendarAuthUrl();
-      const popup = window.open(authUrl, "google-calendar", "width=500,height=600");
-      if (!popup) {
-        throw new Error("Popup blocked. Please allow popups to connect Google Calendar.");
+      if (isServerCalendarMode) {
+        const authUrl = await getCalendarAuthUrl();
+        const popup = window.open(authUrl, "google-calendar", "width=500,height=600");
+        if (!popup) {
+          throw new Error("Popup blocked. Please allow popups to connect Google Calendar.");
+        }
+        const handleMessage = async (event: MessageEvent) => {
+          if (event.data?.type !== "google-calendar-connected") {
+            return;
+          }
+          try {
+            const result = await getCalendarStatus();
+            setCalendarConnected(result.connected);
+            setStatus({ tone: "success", message: "Google Calendar connected successfully." });
+            setSessionExpired(false);
+          } catch (error) {
+            const message = error instanceof Error ? error.message : "Unable to confirm connection.";
+            setStatus({ tone: "error", message });
+          } finally {
+            setIsConnecting(false);
+          }
+        };
+        window.addEventListener("message", handleMessage, { once: true });
+      } else {
+        const result = await connectGoogleCalendar();
+        setCalendarAccessToken(result.accessToken);
+        setCalendarConnected(true);
+        setStatus({ tone: "success", message: "Google Calendar connected successfully." });
+        setSessionExpired(false);
+        setIsConnecting(false);
       }
-      const handleMessage = async (event: MessageEvent) => {
-        if (event.data?.type !== "google-calendar-connected") {
-          return;
-        }
-        try {
-          const result = await getCalendarStatus();
-          setCalendarConnected(result.connected);
-          setStatus({ tone: "success", message: "Google Calendar connected successfully." });
-        } catch (error) {
-          const message = error instanceof Error ? error.message : "Unable to confirm connection.";
-          setStatus({ tone: "error", message });
-        } finally {
-          setIsConnecting(false);
-        }
-      };
-      window.addEventListener("message", handleMessage, { once: true });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to connect Google Calendar.";
       setStatus({ tone: "error", message });
+      setSessionExpired(message.toLowerCase().includes("session expired"));
       setIsConnecting(false);
     } finally {
-      setTimeout(async () => {
-        try {
-          const result = await getCalendarStatus();
-          if (result.connected) {
-            setCalendarConnected(true);
+      if (isServerCalendarMode) {
+        setTimeout(async () => {
+          try {
+            const result = await getCalendarStatus();
+            if (result.connected) {
+              setCalendarConnected(true);
+            }
+          } catch {
+            // ignore
           }
-        } catch {
-          // ignore
-        }
-      }, 2000);
-      setTimeout(() => setIsConnecting(false), 12000);
+        }, 2000);
+        setTimeout(() => setIsConnecting(false), 12000);
+      }
     }
   };
 
@@ -113,9 +136,11 @@ const Calendar: React.FC = () => {
     try {
       const upcoming = await listCalendarEvents({ maxResults: 6 });
       setEvents(upcoming);
+      setSessionExpired(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to refresh calendar events.";
       setStatus({ tone: "error", message });
+      setSessionExpired(message.toLowerCase().includes("session expired"));
     } finally {
       setIsSyncing(false);
     }
@@ -172,12 +197,8 @@ const Calendar: React.FC = () => {
   const calendarDates = buildCalendarGrid();
 
   const handleCreateEvent = async () => {
-    if (!calendarConnected) {
-      setStatus({ tone: "error", message: "Connect Google Calendar before adding events." });
-      return;
-    }
     if (!taskTitle.trim()) {
-      setStatus({ tone: "error", message: "Add a task title to create a calendar event." });
+      setStatus({ tone: "error", message: "Add a task title." });
       return;
     }
     if (!taskDate || !taskTime) {
@@ -199,16 +220,25 @@ const Calendar: React.FC = () => {
           syncSource: "local"
         }
       );
-      const eventInput = buildCalendarEventPayload(newTask);
-      const created = await createCalendarEvent(eventInput);
-      const syncedTask = { ...newTask, googleEventId: created.id };
-      addTask(loadTasks(), syncedTask);
+      if (calendarConnected) {
+        const eventInput = buildCalendarEventPayload(newTask);
+        const created = await createCalendarEvent(eventInput);
+        const syncedTask = { ...newTask, googleEventId: created.id };
+        addTask(loadTasks(), syncedTask);
+        setSessionExpired(false);
+      } else {
+        addTask(loadTasks(), newTask);
+      }
       setTaskTitle("");
       await refreshEvents({ silent: true });
-      setStatus({ tone: "success", message: "Event added to Google Calendar." });
+      setStatus({
+        tone: "success",
+        message: calendarConnected ? "Event added to Google Calendar." : "Task saved locally."
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to create calendar event.";
       setStatus({ tone: "error", message });
+      setSessionExpired(message.toLowerCase().includes("session expired"));
     } finally {
       setIsCreating(false);
     }
@@ -278,17 +308,24 @@ const Calendar: React.FC = () => {
         </div>
       </div>
 
-      <div className="calendar-sync">
-        <div className="calendar-sync__header">
-          <h3>Google Calendar</h3>
-          <span
+        <div className="calendar-sync">
+          <div className="calendar-sync__header">
+            <h3>Google Calendar</h3>
+            <span
             className={`status-pill ${calendarConnected ? "status-pill--success" : "status-pill--error"}`}
             aria-live="polite"
           >
             {calendarConnected ? "Connected" : "Not connected"}
           </span>
         </div>
-        <p className="calendar-sync__note">Link your Google Calendar to see upcoming events and add tasks.</p>
+        <p className="calendar-sync__note">
+          {isClientCalendarMode
+            ? "Client-only mode: reconnect when the session expires."
+            : "Link your Google Calendar to see upcoming events and add tasks."}
+        </p>
+        {sessionExpired ? (
+          <p className="calendar-sync__hint">Session expired. Click Connect to reauthorize.</p>
+        ) : null}
         <div className="calendar-sync__actions">
           <button type="button" className="primary-btn" onClick={handleConnect} disabled={isConnecting}>
             {isConnecting ? "Connecting..." : calendarConnected ? "Reconnect" : "Connect"}
@@ -326,7 +363,7 @@ const Calendar: React.FC = () => {
       </div>
 
       <div className="calendar-task">
-        <h3>Add event to Google Calendar</h3>
+        <h3>{calendarConnected ? "Add event to Google Calendar" : "Add task"}</h3>
         <div className="calendar-task__row">
           <input
             type="text"
@@ -345,7 +382,7 @@ const Calendar: React.FC = () => {
           onClick={handleCreateEvent}
           disabled={isCreating}
         >
-          {isCreating ? "Adding..." : "Add to calendar"}
+          {isCreating ? "Adding..." : calendarConnected ? "Add to calendar" : "Save task"}
         </button>
       </div>
 

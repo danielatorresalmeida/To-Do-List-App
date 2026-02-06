@@ -7,15 +7,20 @@ import {
   createCalendarEvent,
   getCalendarAuthUrl,
   getCalendarStatus,
-  listCalendarEvents
+  isClientCalendarMode,
+  isServerCalendarMode,
+  listCalendarEvents,
+  setCalendarAccessToken
 } from "../services/googleCalendar";
 import { buildCalendarEventPayload, mergeTasksFromEvents } from "../services/taskSync";
+import { connectGoogleCalendar } from "../services/auth";
 
 const Tasks: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [status, setStatus] = useState<{ tone: "success" | "error"; message: string } | null>(null);
   const [calendarConnected, setCalendarConnected] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -45,6 +50,9 @@ const Tasks: React.FC = () => {
       try {
         const result = await getCalendarStatus();
         setCalendarConnected(result.connected);
+        if (result.connected) {
+          setSessionExpired(false);
+        }
       } catch {
         setCalendarConnected(false);
       }
@@ -163,9 +171,11 @@ const Tasks: React.FC = () => {
       if (!options?.silent) {
         setStatus({ tone: "success", message: "Tasks synced with Google Calendar." });
       }
+      setSessionExpired(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to sync tasks.";
       setStatus({ tone: "error", message });
+      setSessionExpired(message.toLowerCase().includes("session expired"));
     } finally {
       setIsSyncing(false);
     }
@@ -175,36 +185,52 @@ const Tasks: React.FC = () => {
     setStatus(null);
     setIsConnecting(true);
     try {
-      const authUrl = await getCalendarAuthUrl();
-      const popup = window.open(authUrl, "google-calendar", "width=500,height=600");
-      if (!popup) {
-        throw new Error("Popup blocked. Please allow popups to connect Google Calendar.");
-      }
-      const handleMessage = async (event: MessageEvent) => {
-        if (event.data?.type !== "google-calendar-connected") {
-          return;
+      if (isServerCalendarMode) {
+        const authUrl = await getCalendarAuthUrl();
+        const popup = window.open(authUrl, "google-calendar", "width=500,height=600");
+        if (!popup) {
+          throw new Error("Popup blocked. Please allow popups to connect Google Calendar.");
         }
-        try {
-          const result = await getCalendarStatus();
-          setCalendarConnected(result.connected);
-          setStatus({ tone: "success", message: "Google Calendar connected successfully." });
-          if (autoSync && result.connected) {
-            await handleSync({ silent: true });
+        const handleMessage = async (event: MessageEvent) => {
+          if (event.data?.type !== "google-calendar-connected") {
+            return;
           }
-        } catch (error) {
-          const message = error instanceof Error ? error.message : "Unable to confirm connection.";
-          setStatus({ tone: "error", message });
-        } finally {
-          setIsConnecting(false);
+          try {
+            const result = await getCalendarStatus();
+            setCalendarConnected(result.connected);
+            setStatus({ tone: "success", message: "Google Calendar connected successfully." });
+            setSessionExpired(false);
+            if (autoSync && result.connected) {
+              await handleSync({ silent: true });
+            }
+          } catch (error) {
+            const message = error instanceof Error ? error.message : "Unable to confirm connection.";
+            setStatus({ tone: "error", message });
+          } finally {
+            setIsConnecting(false);
+          }
+        };
+        window.addEventListener("message", handleMessage, { once: true });
+      } else {
+        const result = await connectGoogleCalendar();
+        setCalendarAccessToken(result.accessToken);
+        setCalendarConnected(true);
+        setStatus({ tone: "success", message: "Google Calendar connected successfully." });
+        setSessionExpired(false);
+        if (autoSync) {
+          await handleSync({ silent: true });
         }
-      };
-      window.addEventListener("message", handleMessage, { once: true });
+        setIsConnecting(false);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to connect Google Calendar.";
       setStatus({ tone: "error", message });
+      setSessionExpired(message.toLowerCase().includes("session expired"));
       setIsConnecting(false);
     } finally {
-      setTimeout(() => setIsConnecting(false), 12000);
+      if (isServerCalendarMode) {
+        setTimeout(() => setIsConnecting(false), 12000);
+      }
     }
   };
 
@@ -236,10 +262,15 @@ const Tasks: React.FC = () => {
       <div className="tasks-sync">
         <div>
           <h3>Google Calendar</h3>
-          <p>{calendarConnected ? "Connected" : "Not connected"}</p>
+          <p>{calendarConnected ? "Connected" : isClientCalendarMode ? "Client-only mode" : "Not connected"}</p>
         </div>
         <div className="tasks-sync__actions">
-          <button className="ghost-btn" type="button" onClick={handleConnect} disabled={isConnecting}>
+          <button
+            className="ghost-btn"
+            type="button"
+            onClick={handleConnect}
+            disabled={isConnecting}
+          >
             {isConnecting ? "Connecting..." : calendarConnected ? "Reconnect" : "Connect"}
           </button>
           <button
@@ -252,11 +283,16 @@ const Tasks: React.FC = () => {
             {isSyncing ? "Syncing..." : "Sync"}
           </button>
           <label className="tasks-sync__toggle">
-            <input type="checkbox" checked={autoSync} onChange={handleAutoSyncChange} />
+            <input
+              type="checkbox"
+              checked={autoSync}
+              onChange={handleAutoSyncChange}
+            />
             Auto-sync
           </label>
         </div>
       </div>
+      {sessionExpired ? <p className="tasks-sync__hint">Session expired. Click Connect to reauthorize.</p> : null}
 
       {status ? (
         <div className={`status-pill ${status.tone === "success" ? "status-pill--success" : "status-pill--error"}`}>
