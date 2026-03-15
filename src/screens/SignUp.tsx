@@ -4,6 +4,7 @@ import { HiEnvelope, HiLockClosed, HiUser } from "react-icons/hi2";
 import { FaApple } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { signUpWithEmail, signInWithGoogle } from "../services/auth";
+import { getAuthErrorMessage } from "../services/authErrors";
 import LogoMark from "../components/LogoMark";
 
 const SignUp: React.FC = () => {
@@ -30,7 +31,7 @@ const SignUp: React.FC = () => {
         navigate("/verify");
       }, 1400);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to sign up.";
+      const message = getAuthErrorMessage(error, "email-sign-up");
       setStatus({ tone: "error", message });
     } finally {
       setIsBusy(false);
@@ -45,7 +46,7 @@ const SignUp: React.FC = () => {
       setStatus({ tone: "success", message: "Account connected with Google." });
       navigate("/home");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to connect with Google.";
+      const message = getAuthErrorMessage(error, "google-sign-in");
       setStatus({ tone: "error", message });
     } finally {
       setIsBusy(false);
