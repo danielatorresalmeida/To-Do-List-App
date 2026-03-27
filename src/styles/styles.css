@@ -739,6 +739,7 @@ textarea::placeholder {
 .tasks__header {
   display: flex;
   gap: 12px;
+  align-items: stretch;
 }
 
 .tasks-sync {
@@ -793,16 +794,59 @@ textarea::placeholder {
 
 .search-field input {
   color: #ffffff;
+  width: 100%;
 }
 
-.sort-btn {
+.sort-field {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  justify-content: center;
   gap: 6px;
   background: rgba(255, 255, 255, 0.12);
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: 12px;
   font-size: 12px;
+  min-width: 120px;
+}
+
+.sort-field span {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.sort-field select {
+  border: none;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+  background: #0a2947;
+  color: #ffffff;
+}
+
+.tasks__filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.filter-chip--active {
+  border-color: transparent;
+  background: #6de0ff;
+  color: #07233f;
+  font-weight: 600;
+}
+
+.tasks__summary {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .section-title {
@@ -838,6 +882,12 @@ textarea::placeholder {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .bars-icon {

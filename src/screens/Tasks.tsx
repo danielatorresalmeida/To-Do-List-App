@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { HiMagnifyingGlass, HiChevronDown, HiPlus, HiChevronRight, HiOutlineArrowPath } from "react-icons/hi2";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { HiMagnifyingGlass, HiPlus, HiChevronRight, HiOutlineArrowPath } from "react-icons/hi2";
 import { Link } from "react-router-dom";
 import TabBar from "../components/TabBar";
 import { addTask, createTask, loadTasks, saveTasks, type Task } from "../services/tasks";
@@ -14,11 +14,35 @@ import {
 } from "../services/googleCalendar";
 import { buildCalendarEventPayload, mergeTasksFromEvents } from "../services/taskSync";
 import { connectGoogleCalendar } from "../services/auth";
+import {
+  type TaskSortOption,
+  type TaskStatusFilter,
+  getVisibleTasks
+} from "../services/taskView";
+import {
+  buildSyncFailureStatus,
+  buildSyncOutcomeStatus,
+  buildSyncWindow
+} from "../services/taskSyncState";
+
+const SEARCH_DEBOUNCE_MS = 180;
+
+const getTodayDate = () => {
+  const today = new Date();
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+};
+
+const DEFAULT_DUE_TIME = "09:00";
 
 const Tasks: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [status, setStatus] = useState<{ tone: "success" | "error"; message: string } | null>(null);
+  const [queryInput, setQueryInput] = useState("");
+  const [query, setQuery] = useState("");
+  const [filterBy, setFilterBy] = useState<TaskStatusFilter>("all");
+  const [sortBy, setSortBy] = useState<TaskSortOption>("due-soonest");
   const [calendarConnected, setCalendarConnected] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -33,17 +57,30 @@ const Tasks: React.FC = () => {
   const [form, setForm] = useState({
     title: "",
     description: "",
-    dueDate: (() => {
-      const today = new Date();
-      const pad = (value: number) => String(value).padStart(2, "0");
-      return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
-    })(),
-    dueTime: "09:00"
+    dueDate: getTodayDate(),
+    dueTime: DEFAULT_DUE_TIME
   });
+  const tasksRef = useRef<Task[]>([]);
+  const syncInFlightRef = useRef(false);
+  const syncQueuedRef = useRef(false);
+  const queuedSilentRef = useRef(true);
 
   useEffect(() => {
-    setTasks(loadTasks());
+    const stored = loadTasks();
+    tasksRef.current = stored;
+    setTasks(stored);
   }, []);
+
+  useEffect(() => {
+    tasksRef.current = tasks;
+  }, [tasks]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setQuery(queryInput);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timeout);
+  }, [queryInput]);
 
   useEffect(() => {
     const checkStatus = async () => {
@@ -64,11 +101,40 @@ const Tasks: React.FC = () => {
     if (!autoSync || !calendarConnected) {
       return;
     }
-    const runAutoSync = async () => {
-      await handleSync({ silent: true });
-    };
-    runAutoSync();
+    queueSync({ silent: true });
   }, [autoSync, calendarConnected]);
+
+  useEffect(() => {
+    if (!isModalOpen) {
+      return;
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsModalOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isModalOpen]);
+
+  const visibleTasks = useMemo(
+    () =>
+      getVisibleTasks(tasks, {
+        query,
+        filterBy,
+        sortBy
+      }),
+    [tasks, query, filterBy, sortBy]
+  );
+
+  const resetTaskForm = () => {
+    setForm({
+      title: "",
+      description: "",
+      dueDate: getTodayDate(),
+      dueTime: DEFAULT_DUE_TIME
+    });
+  };
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target;
@@ -103,16 +169,12 @@ const Tasks: React.FC = () => {
         }
       }
 
-      const updated = addTask(tasks, nextTask);
-      setTasks(updated);
-      const today = new Date();
-      const pad = (value: number) => String(value).padStart(2, "0");
-      setForm({
-        title: "",
-        description: "",
-        dueDate: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
-        dueTime: "09:00"
+      setTasks((prev) => {
+        const updated = addTask(prev, nextTask);
+        tasksRef.current = updated;
+        return updated;
       });
+      resetTaskForm();
       setIsModalOpen(false);
       if (syncError) {
         setStatus({ tone: "error", message: `${syncError} Task saved locally.` });
@@ -124,10 +186,10 @@ const Tasks: React.FC = () => {
     }
   };
 
-  const handleSync = async (options?: { silent?: boolean }) => {
-    if (isSyncing) {
-      return;
-    }
+  const runSyncOnce = async (options?: { silent?: boolean }) => {
+    let createdCount = 0;
+    let persistedProgress = false;
+
     try {
       const connection = await getCalendarStatus();
       setCalendarConnected(connection.connected);
@@ -144,41 +206,101 @@ const Tasks: React.FC = () => {
       }
       return;
     }
-    setIsSyncing(true);
+
     if (!options?.silent) {
       setStatus(null);
     }
+
     try {
-      let nextTasks = [...tasks];
+      let nextTasks = loadTasks().map((task) => ({ ...task }));
+      if (!nextTasks.length) {
+        nextTasks = tasksRef.current.map((task) => ({ ...task }));
+      }
+
+      let failedCount = 0;
+      let firstCreateError: string | null = null;
+
       for (const task of nextTasks) {
         if (!task.googleEventId) {
-          const payload = buildCalendarEventPayload(task);
-          const event = await createCalendarEvent(payload);
-          task.googleEventId = event.id;
-          task.updatedAt = new Date().toISOString();
+          try {
+            const payload = buildCalendarEventPayload(task);
+            const event = await createCalendarEvent(payload);
+            task.googleEventId = event.id;
+            task.updatedAt = new Date().toISOString();
+            createdCount += 1;
+          } catch (error) {
+            failedCount += 1;
+            if (!firstCreateError) {
+              firstCreateError = error instanceof Error ? error.message : "Unable to sync task to Google Calendar.";
+            }
+          }
         }
       }
-      const dates = nextTasks
-        .filter((task) => task.dueDate)
-        .map((task) => new Date(`${task.dueDate}T${task.dueTime || "00:00"}`));
-      const earliest = dates.length ? new Date(Math.min(...dates.map((date) => date.getTime()))) : new Date();
-      const timeMin = earliest.toISOString();
-      const end = new Date(earliest.getTime() + 1000 * 60 * 60 * 24 * 180);
-      const timeMax = end.toISOString();
-      const events = await listCalendarEvents({ timeMin, timeMax, maxResults: 100 });
-      nextTasks = mergeTasksFromEvents(nextTasks, events, { start: earliest, end });
-      setTasks(saveTasks(nextTasks));
+
+      // Persist successful event IDs before fetching remote events to prevent duplicate event creation on retries.
+      nextTasks = saveTasks(nextTasks);
+      tasksRef.current = nextTasks;
+      setTasks(nextTasks);
+      persistedProgress = true;
+
+      const syncWindow = buildSyncWindow(nextTasks);
+      const events = await listCalendarEvents({
+        timeMin: syncWindow.timeMin,
+        timeMax: syncWindow.timeMax,
+        maxResults: 100
+      });
+
+      nextTasks = mergeTasksFromEvents(nextTasks, events, {
+        start: syncWindow.earliest,
+        end: syncWindow.end
+      });
+      nextTasks = saveTasks(nextTasks);
+      tasksRef.current = nextTasks;
+      setTasks(nextTasks);
+
       if (!options?.silent) {
-        setStatus({ tone: "success", message: "Tasks synced with Google Calendar." });
+        setStatus(buildSyncOutcomeStatus({ createdCount, failedCount, firstCreateError }));
       }
       setSessionExpired(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to sync tasks.";
-      setStatus({ tone: "error", message });
+      setStatus(
+        buildSyncFailureStatus({
+          message,
+          createdCount,
+          persistedProgress
+        })
+      );
       setSessionExpired(message.toLowerCase().includes("session expired"));
+    }
+  };
+
+  const runQueuedSync = async () => {
+    if (syncInFlightRef.current) {
+      return;
+    }
+    syncInFlightRef.current = true;
+    setIsSyncing(true);
+
+    try {
+      while (syncQueuedRef.current) {
+        syncQueuedRef.current = false;
+        const silent = queuedSilentRef.current;
+        queuedSilentRef.current = true;
+        await runSyncOnce({ silent });
+      }
     } finally {
+      syncInFlightRef.current = false;
       setIsSyncing(false);
     }
+  };
+
+  const queueSync = (options?: { silent?: boolean }) => {
+    if (!options?.silent) {
+      queuedSilentRef.current = false;
+    }
+    syncQueuedRef.current = true;
+    void runQueuedSync();
   };
 
   const handleConnect = async () => {
@@ -201,7 +323,7 @@ const Tasks: React.FC = () => {
             setStatus({ tone: "success", message: "Google Calendar connected successfully." });
             setSessionExpired(false);
             if (autoSync && result.connected) {
-              await handleSync({ silent: true });
+              queueSync({ silent: true });
             }
           } catch (error) {
             const message = error instanceof Error ? error.message : "Unable to confirm connection.";
@@ -218,7 +340,7 @@ const Tasks: React.FC = () => {
         setStatus({ tone: "success", message: "Google Calendar connected successfully." });
         setSessionExpired(false);
         if (autoSync) {
-          await handleSync({ silent: true });
+          queueSync({ silent: true });
         }
         setIsConnecting(false);
       }
@@ -241,7 +363,7 @@ const Tasks: React.FC = () => {
       localStorage.setItem("calendarAutoSync", value ? "true" : "false");
     }
     if (value && calendarConnected) {
-      handleSync({ silent: true });
+      queueSync({ silent: true });
     }
   };
 
@@ -251,13 +373,51 @@ const Tasks: React.FC = () => {
       <div className="tasks__header">
         <label className="search-field">
           <HiMagnifyingGlass />
-          <input type="text" placeholder="Search by task title" />
+          <input
+            type="text"
+            placeholder="Search by title or description"
+            value={queryInput}
+            onChange={(event) => setQueryInput(event.target.value)}
+            aria-label="Search tasks"
+          />
         </label>
-        <button className="sort-btn" type="button">
-          <span>Sort By:</span>
-          <HiChevronDown />
+        <label className="sort-field">
+          <span>Sort</span>
+          <select value={sortBy} onChange={(event) => setSortBy(event.target.value as TaskSortOption)} aria-label="Sort tasks">
+            <option value="due-soonest">Due soonest</option>
+            <option value="due-latest">Due latest</option>
+            <option value="title-asc">Title A-Z</option>
+            <option value="title-desc">Title Z-A</option>
+            <option value="recently-updated">Recently updated</option>
+          </select>
+        </label>
+      </div>
+      <div className="tasks__filters" role="group" aria-label="Filter tasks by status">
+        <button
+          type="button"
+          className={`filter-chip${filterBy === "all" ? " filter-chip--active" : ""}`}
+          onClick={() => setFilterBy("all")}
+        >
+          All
+        </button>
+        <button
+          type="button"
+          className={`filter-chip${filterBy === "pending" ? " filter-chip--active" : ""}`}
+          onClick={() => setFilterBy("pending")}
+        >
+          Pending
+        </button>
+        <button
+          type="button"
+          className={`filter-chip${filterBy === "completed" ? " filter-chip--active" : ""}`}
+          onClick={() => setFilterBy("completed")}
+        >
+          Completed
         </button>
       </div>
+      <p className="tasks__summary">
+        Showing {visibleTasks.length} of {tasks.length} tasks
+      </p>
 
       <div className="tasks-sync">
         <div>
@@ -276,7 +436,7 @@ const Tasks: React.FC = () => {
           <button
             className="ghost-btn"
             type="button"
-            onClick={() => handleSync()}
+            onClick={() => queueSync()}
             disabled={isSyncing || !calendarConnected}
           >
             <HiOutlineArrowPath />
@@ -303,17 +463,21 @@ const Tasks: React.FC = () => {
       <h2 className="section-title">Tasks List</h2>
 
       {tasks.length ? (
-        tasks.map((task) => (
-          <Link key={task.id} to={`/tasks/${task.id}`} className={`task-row${task.isCompleted ? " task-row--done" : ""}`}>
-            <div>
-              <h4>{task.title}</h4>
-              <p>
-                {task.dueDate} | {task.dueTime}
-              </p>
-            </div>
-            <HiChevronRight />
-          </Link>
-        ))
+        visibleTasks.length ? (
+          visibleTasks.map((task) => (
+            <Link key={task.id} to={`/tasks/${task.id}`} className={`task-row${task.isCompleted ? " task-row--done" : ""}`}>
+              <div>
+                <h4>{task.title}</h4>
+                <p>
+                  {task.dueDate} | {task.dueTime}
+                </p>
+              </div>
+              <HiChevronRight />
+            </Link>
+          ))
+        ) : (
+          <p className="calendar-empty">No tasks match your current search and filters.</p>
+        )
       ) : (
         <p className="calendar-empty">No tasks yet. Add one to get started.</p>
       )}
@@ -325,48 +489,67 @@ const Tasks: React.FC = () => {
       <TabBar />
 
       {isModalOpen ? (
-        <div className="modal-overlay" role="dialog" aria-modal="true">
+        <div
+          className="modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="create-task-title"
+          onClick={(event) => {
+            if (event.target === event.currentTarget && !isCreating) {
+              setIsModalOpen(false);
+            }
+          }}
+        >
           <div className="modal-card modal-card--form">
-            <label className="input-field input-field--dark">
-              <span className="input-icon">
-                <HiPlus />
-              </span>
-              <input
-                type="text"
-                name="title"
-                value={form.title}
-                onChange={handleChange}
-                placeholder="task"
-              />
-            </label>
-            <label className="input-field input-field--dark input-field--textarea">
-              <span className="input-icon">
-                <span className="bars-icon" aria-hidden="true" />
-              </span>
-              <textarea
-                name="description"
-                placeholder="Description"
-                rows={4}
-                value={form.description}
-                onChange={handleChange}
-              />
-            </label>
-            <div className="inline-fields">
+            <h3 id="create-task-title">Create task</h3>
+            <form
+              className="modal-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleCreateTask();
+              }}
+            >
               <label className="input-field input-field--dark">
-                <input type="date" name="dueDate" value={form.dueDate} onChange={handleChange} />
+                <span className="input-icon">
+                  <HiPlus />
+                </span>
+                <input
+                  type="text"
+                  name="title"
+                  value={form.title}
+                  onChange={handleChange}
+                  placeholder="task"
+                />
               </label>
-              <label className="input-field input-field--dark">
-                <input type="time" name="dueTime" value={form.dueTime} onChange={handleChange} />
+              <label className="input-field input-field--dark input-field--textarea">
+                <span className="input-icon">
+                  <span className="bars-icon" aria-hidden="true" />
+                </span>
+                <textarea
+                  name="description"
+                  placeholder="Description"
+                  rows={4}
+                  value={form.description}
+                  onChange={handleChange}
+                />
               </label>
-            </div>
-            <div className="modal-actions">
-              <button type="button" className="ghost-btn" onClick={() => setIsModalOpen(false)}>
-                cancel
-              </button>
-              <button type="button" className="primary-btn" onClick={handleCreateTask} disabled={isCreating}>
-                {isCreating ? "creating..." : "create"}
-              </button>
-            </div>
+              <div className="inline-fields">
+                <label className="input-field input-field--dark">
+                  <input type="date" name="dueDate" value={form.dueDate} onChange={handleChange} />
+                </label>
+                <label className="input-field input-field--dark">
+                  <input type="time" name="dueTime" value={form.dueTime} onChange={handleChange} />
+                </label>
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="ghost-btn" onClick={() => setIsModalOpen(false)}>
+                  cancel
+                </button>
+                <button type="submit" className="primary-btn" disabled={isCreating}>
+                  {isCreating ? "creating..." : "create"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       ) : null}

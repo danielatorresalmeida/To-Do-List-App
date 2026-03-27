@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@types/three": "^0.182.0",
@@ -19,8 +21,10 @@
     "three": "^0.182.0"
   },
   "devDependencies": {
+    "@types/node": "^24.7.2",
     "@vitejs/plugin-react": "^5.1.2",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vitest": "^2.1.9"
   },
   "author": "",
   "license": "ISC",
