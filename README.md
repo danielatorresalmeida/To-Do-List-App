@@ -12,6 +12,37 @@ A simple to-do list app built with React, TypeScript, Firebase, and Vite.
 4. In your Vite `.env`, set:
    - `VITE_FUNCTIONS_BASE_URL=https://<region>-<project-id>.cloudfunctions.net/api`
 
+## Fixing Google sign-in misconfiguration
+If you see "Google sign-in is misconfigured in Firebase", verify these in order:
+1. Firebase Authentication:
+   - Enable **Google** in `Authentication > Sign-in method`.
+2. OAuth consent + OAuth client in Google Cloud:
+   - The OAuth client belongs to the same Firebase project.
+   - Your OAuth consent screen is configured and published for your test users.
+3. Authorized domains in Firebase:
+   - Add your app domain in `Authentication > Settings > Authorized domains`.
+   - For local dev, ensure `localhost` is present.
+4. App Firebase web config:
+   - `VITE_FIREBASE_API_KEY`
+   - `VITE_FIREBASE_AUTH_DOMAIN`
+   - `VITE_FIREBASE_PROJECT_ID`
+   - `VITE_FIREBASE_APP_ID`
+   - Restart the dev server after editing `.env`.
+5. If it still fails:
+   - Check browser popup blockers.
+   - Confirm the browser URL domain exactly matches an authorized domain.
+
+## Enabling Apple sign-in in Firebase
+1. In Firebase `Authentication > Sign-in method`, enable **Apple**.
+2. In Apple Developer:
+   - Create/confirm a Service ID for web sign-in.
+   - Configure Sign in with Apple and return URL from Firebase.
+   - Create a Sign in with Apple key (Key ID + private key file), and note Team ID.
+3. Back in Firebase Apple provider config:
+   - Fill Service ID, Team ID, Key ID, and private key.
+4. Add your app domain to Firebase authorized domains.
+5. Test Apple sign-in in your app.
+
 ## Secret-safety guardrails
 1. Install local Git hooks once:
    - `npm run hooks:install`

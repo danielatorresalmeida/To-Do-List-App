@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { HiEnvelope, HiLockClosed, HiUser } from "react-icons/hi2";
 import { FaApple } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
-import { signUpWithEmail, signInWithGoogle } from "../services/auth";
+import { signInWithApple, signUpWithEmail, signInWithGoogle } from "../services/auth";
 import { getAuthErrorMessage } from "../services/authErrors";
 import LogoMark from "../components/LogoMark";
 
@@ -47,6 +47,21 @@ const SignUp: React.FC = () => {
       navigate("/home");
     } catch (error) {
       const message = getAuthErrorMessage(error, "google-sign-in");
+      setStatus({ tone: "error", message });
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleApple = async () => {
+    setStatus(null);
+    setIsBusy(true);
+    try {
+      await signInWithApple();
+      setStatus({ tone: "success", message: "Account connected with Apple." });
+      navigate("/home");
+    } catch (error) {
+      const message = getAuthErrorMessage(error, "apple-sign-in");
       setStatus({ tone: "error", message });
     } finally {
       setIsBusy(false);
@@ -124,7 +139,7 @@ const SignUp: React.FC = () => {
       <div className="auth__social">
         <span>Sign Up with:</span>
         <div className="auth__social-buttons">
-          <button type="button" className="icon-btn" disabled aria-label="Apple sign up">
+          <button type="button" className="icon-btn" onClick={handleApple} disabled={isBusy} aria-label="Apple sign up">
             <FaApple />
           </button>
           <button

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { HiEnvelope, HiLockClosed } from "react-icons/hi2";
 import { FaApple } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
-import { signInWithEmail, signInWithGoogle } from "../services/auth";
+import { signInWithApple, signInWithEmail, signInWithGoogle } from "../services/auth";
 import { getAuthErrorMessage } from "../services/authErrors";
 import LogoMark from "../components/LogoMark";
 
@@ -43,6 +43,21 @@ const SignIn: React.FC = () => {
       navigate("/home");
     } catch (error) {
       const message = getAuthErrorMessage(error, "google-sign-in");
+      setStatus({ tone: "error", message });
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleApple = async () => {
+    setStatus(null);
+    setIsBusy(true);
+    try {
+      const user = await signInWithApple();
+      setStatus({ tone: "success", message: `Signed in as ${user.displayName || user.email || "Apple user"}.` });
+      navigate("/home");
+    } catch (error) {
+      const message = getAuthErrorMessage(error, "apple-sign-in");
       setStatus({ tone: "error", message });
     } finally {
       setIsBusy(false);
@@ -112,7 +127,7 @@ const SignIn: React.FC = () => {
       <div className="auth__social">
         <span>Sign In with:</span>
         <div className="auth__social-buttons">
-          <button type="button" className="icon-btn" disabled aria-label="Apple sign in">
+          <button type="button" className="icon-btn" onClick={handleApple} disabled={isBusy} aria-label="Apple sign in">
             <FaApple />
           </button>
           <button

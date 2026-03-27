@@ -1,6 +1,7 @@
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
+  OAuthProvider,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut as firebaseSignOut
@@ -16,6 +17,15 @@ const ensureFirebase = () => {
 export const signInWithGoogle = async () => {
   ensureFirebase();
   const result = await signInWithPopup(auth, googleProvider);
+  return result.user;
+};
+
+export const signInWithApple = async () => {
+  ensureFirebase();
+  const provider = new OAuthProvider("apple.com");
+  provider.addScope("email");
+  provider.addScope("name");
+  const result = await signInWithPopup(auth, provider);
   return result.user;
 };
 

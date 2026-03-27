@@ -419,6 +419,7 @@ textarea::placeholder {
   height: 42px;
   border-radius: 10px;
   background: #ffffff;
+  color: #111826;
   display: grid;
   place-items: center;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.18);
@@ -427,6 +428,10 @@ textarea::placeholder {
 .icon-btn svg {
   width: 18px;
   height: 18px;
+}
+
+.icon-btn:disabled {
+  opacity: 1;
 }
 
 .modal-overlay {
