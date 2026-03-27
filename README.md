@@ -11,3 +11,13 @@ A simple to-do list app built with React, TypeScript, Firebase, and Vite.
    - For local emulators: `http://localhost:5001/<project-id>/us-central1/api/oauth/callback`
 4. In your Vite `.env`, set:
    - `VITE_FUNCTIONS_BASE_URL=https://<region>-<project-id>.cloudfunctions.net/api`
+
+## Secret-safety guardrails
+1. Install local Git hooks once:
+   - `npm run hooks:install`
+2. Run a full secret scan manually any time:
+   - `npm run secrets:scan`
+3. Pre-commit automatically scans staged files and blocks commits that contain:
+   - Google OAuth client secrets/IDs
+   - Google OAuth secret assignments
+   - Private key blocks

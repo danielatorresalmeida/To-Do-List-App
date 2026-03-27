@@ -8,7 +8,10 @@
     "build": "vite build",
     "serve": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "secrets:scan": "node scripts/scan-secrets.mjs",
+    "secrets:scan:staged": "node scripts/scan-secrets.mjs --staged",
+    "hooks:install": "node scripts/install-hooks.mjs"
   },
   "dependencies": {
     "@types/three": "^0.182.0",
