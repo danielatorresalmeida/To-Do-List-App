@@ -49,6 +49,24 @@ If you see "Google sign-in is misconfigured in Firebase", verify these in order:
 2. Run a full secret scan manually any time:
    - `npm run secrets:scan`
 3. Pre-commit automatically scans staged files and blocks commits that contain:
+   - Google API keys
    - Google OAuth client secrets/IDs
    - Google OAuth secret assignments
    - Private key blocks
+
+## Responding to Google API key public exposure alerts
+If Google Cloud sends a "publicly accessible API key" alert:
+1. Decide if the key is expected to be public:
+   - Firebase Web API keys are client identifiers, so they are visible in browser apps.
+2. Restrict the key in Google Cloud Console (`APIs & Services > Credentials`):
+   - Application restrictions: **HTTP referrers (web sites)**
+   - Allowed referrers: your production domain(s) and localhost dev URLs only.
+   - API restrictions: limit to Firebase/Auth APIs your app uses.
+3. Rotate compromised keys:
+   - Create a new key with restrictions.
+   - Update local `.env` (never commit `.env`).
+   - Redeploy.
+   - Delete the old key.
+4. Verify no sensitive credentials are tracked:
+   - `git ls-files .env` should return nothing.
+   - `npm run secrets:scan` should pass.

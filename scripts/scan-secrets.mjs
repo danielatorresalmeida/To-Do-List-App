@@ -38,6 +38,10 @@ const PLACEHOLDER_HINTS = ["...", "<", "example", "your_", "your-", "redacted", 
 
 const PATTERNS = [
   {
+    name: "Google API key",
+    regex: /\bAIza[0-9A-Za-z_-]{20,}\b/g
+  },
+  {
     name: "Google OAuth client secret",
     regex: /\bGOCSPX-[A-Za-z0-9_-]{10,}\b/g
   },
