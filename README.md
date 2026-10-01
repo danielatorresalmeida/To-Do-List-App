@@ -1,5 +1,53 @@
-# To-Do-List-App
-A simple to-do list app built with React, TypeScript, Firebase, and Vite.
+# To-Do List App
+
+A task management web application built with **React, TypeScript, Firebase and Vite**, combining personal task organisation with authentication and Google Calendar integration.
+
+The project explores a complete front-end application flow — from onboarding and authentication to task management, calendar views and external service integration.
+
+## ✨ Highlights
+
+- ✅ Create, organise and manage personal tasks
+- 📅 Calendar-based task planning
+- 🔄 Google Calendar integration
+- 🔐 Firebase authentication
+- 🌐 Email/password, Google and Apple sign-in
+- 🧭 Multi-page navigation with React Router
+- 🧪 Automated tests with Vitest
+- 🔒 Local secret-scanning guardrails
+- 🚀 Automated deployment with GitHub Actions
+
+## 🛠️ Tech Stack
+
+**Front-end**
+- React
+- TypeScript
+- Vite
+- React Router
+
+**Backend & services**
+- Firebase Authentication
+- Firebase Cloud Functions
+- Google Calendar API
+
+**Quality & tooling**
+- Vitest
+- GitHub Actions
+- Git hooks and secret scanning
+
+## 📱 Application Flow
+
+The application includes dedicated screens for:
+
+- onboarding
+- sign in and registration
+- account verification
+- home dashboard
+- task management
+- task details
+- calendar
+- settings
+
+---
 
 ## Google Calendar sync (Firebase Cloud Functions)
 1. Create a Google Cloud OAuth client (Web) and enable the Google Calendar API for the project.
