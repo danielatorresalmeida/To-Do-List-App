@@ -67,6 +67,39 @@ The application includes dedicated screens for:
 - calendar
 - settings
 
+## 🚀 Getting Started
+
+Clone the repository and install the dependencies:
+
+```bash
+git clone https://github.com/danielatorresalmeida/To-Do-List-App.git
+cd To-Do-List-App
+npm install
+npm run dev
+```
+
+For Firebase authentication and Google Calendar integration, copy `.env.example` to `.env` and provide the required configuration values.
+
+To create a production build:
+
+```bash
+npm run build
+```
+
+## 🧪 Testing
+
+Run the test suite with:
+
+```bash
+npm test
+```
+
+For watch mode during development:
+
+```bash
+npm run test:watch
+```
+
 ---
 
 ## Google Calendar sync (Firebase Cloud Functions)
