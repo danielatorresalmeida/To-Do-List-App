@@ -4,6 +4,26 @@ A task management web application built with **React, TypeScript, Firebase and V
 
 The project explores a complete front-end application flow — from onboarding and authentication to task management, calendar views and external service integration.
 
+## 🌐 Live Demo
+
+[View the live application](https://danielatorresalmeida.github.io/To-Do-List-App/)
+
+## 📸 Application Preview
+
+### Home
+
+![To-Do List App home screen](docs/screenshots/home.png)
+
+### Tasks
+
+![To-Do List App tasks screen](docs/screenshots/tasks.png)
+
+### Calendar
+
+![To-Do List App calendar screen](docs/screenshots/calendar.png)
+
+---
+
 ## ✨ Highlights
 
 - ✅ Create, organise and manage personal tasks
