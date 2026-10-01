@@ -1,5 +1,106 @@
-# To-Do-List-App
-A simple to-do list app built with React, TypeScript, Firebase, and Vite.
+# To-Do List App
+
+A task management web application built with **React, TypeScript, Firebase and Vite**, combining personal task organisation with authentication and Google Calendar integration.
+
+The project explores a complete front-end application flow — from onboarding and authentication to task management, calendar views and external service integration.
+
+## 🌐 Live Demo
+
+[View the live application](https://danielatorresalmeida.github.io/To-Do-List-App/)
+
+## 📸 Application Preview
+
+### Home
+
+![To-Do List App home screen](docs/screenshots/home.png)
+
+### Tasks
+
+![To-Do List App tasks screen](docs/screenshots/tasks.png)
+
+### Calendar
+
+![To-Do List App calendar screen](docs/screenshots/calendar.png)
+
+---
+
+## ✨ Highlights
+
+- ✅ Create, organise and manage personal tasks
+- 📅 Calendar-based task planning
+- 🔄 Google Calendar integration
+- 🔐 Firebase authentication
+- 🌐 Email/password, Google and Apple sign-in
+- 🧭 Multi-page navigation with React Router
+- 🧪 Automated tests with Vitest
+- 🔒 Local secret-scanning guardrails
+- 🚀 Automated deployment with GitHub Actions
+
+## 🛠️ Tech Stack
+
+**Front-end**
+- React
+- TypeScript
+- Vite
+- React Router
+
+**Backend & services**
+- Firebase Authentication
+- Firebase Cloud Functions
+- Google Calendar API
+
+**Quality & tooling**
+- Vitest
+- GitHub Actions
+- Git hooks and secret scanning
+
+## 📱 Application Flow
+
+The application includes dedicated screens for:
+
+- onboarding
+- sign in and registration
+- account verification
+- home dashboard
+- task management
+- task details
+- calendar
+- settings
+
+## 🚀 Getting Started
+
+Clone the repository and install the dependencies:
+
+```bash
+git clone https://github.com/danielatorresalmeida/To-Do-List-App.git
+cd To-Do-List-App
+npm install
+npm run dev
+```
+
+For Firebase authentication and Google Calendar integration, copy `.env.example` to `.env` and provide the required configuration values.
+
+To create a production build:
+
+```bash
+npm run build
+```
+
+## 🧪 Testing
+
+Run the test suite with:
+
+```bash
+npm test
+```
+
+For watch mode during development:
+
+```bash
+npm run test:watch
+```
+
+---
 
 ## Google Calendar sync (Firebase Cloud Functions)
 1. Create a Google Cloud OAuth client (Web) and enable the Google Calendar API for the project.
